@@ -39,10 +39,265 @@ def categorize_job(title: str) -> str:
                 return category
     return "Other"
 
-st.set_page_config(page_title="ΨHM Alumni Dashboard", layout="wide")
+st.set_page_config(page_title="ΨHM Alumni Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
-st.title("ΨHM Alumni Dashboard")
-st.caption("Visualizing alumni locations, jobs, and companies from `data.csv`.")
+NAVY = "#13294B"
+DARK_NAVY = "#0a1628"
+CARD_NAVY = "#0d1d35"
+ACCENT = "#FFFFFF"
+ACCENT_HOVER = "#E0E0E0"
+WHITE = "#FFFFFF"
+LIGHT_GRAY = "#CCCCCC"
+SOFT_WHITE = "#F0F0F0"
+
+st.markdown(
+    f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    html, body, [class*="st-"], .stApp, button, input, textarea, select {{
+        font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif !important;
+    }}
+
+    /* Don't override the Material Symbols font on icon elements — otherwise
+       the ligature text (e.g. "keyboard_double_arrow_right") shows in place of the glyph. */
+    span[class*="material-symbols"],
+    span[class*="material-icons"],
+    .material-icons,
+    .material-symbols-rounded,
+    .material-symbols-outlined,
+    .material-symbols-sharp,
+    [data-testid="stIconMaterial"] {{
+        font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
+    }}
+
+    .stApp {{
+        background-color: {NAVY};
+        color: {SOFT_WHITE};
+    }}
+
+    /* Remove default top/bottom padding so the hero sits flush with the top
+       and the footer sits flush with the bottom. */
+    .main .block-container,
+    [data-testid="stMainBlockContainer"],
+    section.main > div.block-container {{
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }}
+    [data-testid="stAppViewContainer"] > .main {{
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }}
+
+    /* Keep Streamlit header transparent but make sure its controls stay clickable above the hero */
+    #MainMenu, header[data-testid="stHeader"] {{
+        background: rgba(0,0,0,0);
+        z-index: 1000;
+    }}
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="collapsedControl"] {{
+        z-index: 1001 !important;
+        position: relative;
+    }}
+    footer {{ visibility: hidden; }}
+
+    .phm-hero {{
+        text-align: center;
+        padding: 80px 24px 64px;
+        background: linear-gradient(180deg, {DARK_NAVY} 0%, {NAVY} 100%);
+        margin: 0 -3rem 2.5rem -3rem;
+        border-bottom: 3px solid {ACCENT};
+    }}
+    .phm-hero h1 {{
+        font-size: clamp(2.5rem, 6vw, 5rem);
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: {WHITE};
+        margin: 0 0 0.75rem 0;
+        line-height: 1.05;
+    }}
+    .phm-hero .subtitle {{
+        color: {LIGHT_GRAY};
+        font-style: italic;
+        font-weight: 300;
+        font-size: 1.15rem;
+        max-width: 680px;
+        margin: 0 auto 0.5rem;
+        line-height: 1.6;
+    }}
+    .phm-hero .announce {{
+        color: {ACCENT};
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        margin-top: 1rem;
+    }}
+
+    .stApp h2, .stApp h3 {{
+        color: {WHITE};
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        position: relative;
+        padding-bottom: 0.5rem;
+        margin-top: 2.5rem;
+    }}
+    .stApp h2::after, .stApp h3::after {{
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 56px;
+        height: 3px;
+        background-color: {ACCENT};
+    }}
+
+    .stApp p, .stApp li, .stApp .stMarkdown {{
+        color: {SOFT_WHITE};
+        line-height: 1.8;
+    }}
+
+    [data-testid="stMetric"] {{
+        background-color: {CARD_NAVY};
+        padding: 18px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+        border: 1px solid rgba(255,255,255,0.15);
+    }}
+    [data-testid="stMetricLabel"] p {{
+        color: {LIGHT_GRAY} !important;
+        text-transform: uppercase;
+        font-size: 0.7rem !important;
+        letter-spacing: 0.1em;
+        font-weight: 500;
+    }}
+    [data-testid="stMetricValue"] {{
+        color: {WHITE} !important;
+        font-weight: 700;
+    }}
+
+    .stButton > button {{
+        background-color: {ACCENT};
+        color: {NAVY} !important;
+        border: none;
+        border-radius: 4px;
+        padding: 12px 28px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+        transition: background 0.2s ease;
+    }}
+    .stButton > button:hover {{
+        background-color: {ACCENT_HOVER};
+        color: {NAVY} !important;
+    }}
+
+    .stDownloadButton > button {{
+        background-color: {DARK_NAVY};
+        color: {WHITE} !important;
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 4px;
+        padding: 12px 28px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+        transition: background 0.2s ease, border-color 0.2s ease;
+    }}
+    .stDownloadButton > button:hover {{
+        background-color: {NAVY};
+        color: {WHITE} !important;
+        border-color: {WHITE};
+    }}
+
+    [data-testid="stSidebar"] {{
+        background-color: {DARK_NAVY};
+        border-right: 1px solid rgba(255,255,255,0.2);
+    }}
+    [data-testid="stSidebar"] h2 {{
+        color: {WHITE} !important;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 1rem;
+    }}
+    [data-testid="stSidebar"] label, [data-testid="stSidebar"] p {{
+        color: {SOFT_WHITE} !important;
+    }}
+
+    /* Slider — force the accent (thumb + filled track + value bubble) to white,
+       and the unfilled track to a soft translucent white. */
+    [data-testid="stSlider"] [role="slider"] {{
+        background-color: {WHITE} !important;
+        border-color: {WHITE} !important;
+        box-shadow: 0 0 0 2px {WHITE} !important;
+    }}
+    [data-testid="stSlider"] [data-baseweb="slider"] > div > div {{
+        background: rgba(255,255,255,0.25) !important;
+    }}
+    [data-testid="stSlider"] [data-baseweb="slider"] > div > div > div {{
+        background: {WHITE} !important;
+    }}
+    [data-testid="stSlider"] [data-testid="stThumbValue"],
+    [data-testid="stSlider"] [data-testid="stTickBarMin"],
+    [data-testid="stSlider"] [data-testid="stTickBarMax"],
+    [data-testid="stSlider"] [role="slider"],
+    [data-testid="stSlider"] [role="slider"] *,
+    [data-testid="stSlider"] [data-baseweb="tooltip"],
+    [data-testid="stSlider"] [data-baseweb="tooltip"] * {{
+        color: {WHITE} !important;
+    }}
+
+    .stTextInput > div > div > input,
+    .stMultiSelect [data-baseweb="select"] > div {{
+        background-color: {CARD_NAVY} !important;
+        color: {WHITE} !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }}
+
+    .stAlert {{
+        background-color: {CARD_NAVY};
+        border-left: 4px solid {ACCENT};
+        color: {SOFT_WHITE};
+    }}
+    .stAlert p {{ color: {SOFT_WHITE} !important; }}
+
+    a {{ color: {ACCENT}; text-decoration: underline; text-underline-offset: 3px; }}
+    a:hover {{ color: {LIGHT_GRAY}; }}
+
+    .phm-footer {{
+        margin: 4rem -3rem -3rem -3rem;
+        padding: 48px 24px;
+        background-color: #000000;
+        text-align: center;
+        border-top: 2px solid {ACCENT};
+    }}
+    .phm-footer .wordmark {{
+        font-weight: 800;
+        font-size: 1.4rem;
+        letter-spacing: 0.15em;
+        color: {WHITE};
+        text-transform: uppercase;
+    }}
+    .phm-footer p {{
+        color: {LIGHT_GRAY};
+        font-size: 0.85rem;
+        margin: 0.5rem 0 0;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+    <div class="phm-hero">
+        <h1>ΨHM Alumni Dashboard</h1>
+        <p class="subtitle">Where Psi Eta Mu alumni live and work — a visual look at the brotherhood beyond Illinois.</p>
+        <p class="announce">Spring 2026 Snapshot</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 DATA_PATH = Path(__file__).parent / "data.csv"
 if not DATA_PATH.exists():
@@ -107,27 +362,42 @@ if filtered.empty:
 def top_counts(series, n):
     return series.value_counts().head(n).rename_axis("value").reset_index(name="count")
 
+
+def style_fig(fig):
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color=SOFT_WHITE, family="Inter, Helvetica Neue, Arial, sans-serif"),
+        xaxis=dict(gridcolor="rgba(255,255,255,0.08)", color=LIGHT_GRAY, zerolinecolor="rgba(255,255,255,0.15)"),
+        yaxis=dict(gridcolor="rgba(255,255,255,0.08)", color=LIGHT_GRAY, zerolinecolor="rgba(255,255,255,0.15)"),
+        margin=dict(l=10, r=10, t=20, b=10),
+        coloraxis_colorbar=dict(tickcolor=LIGHT_GRAY, tickfont=dict(color=LIGHT_GRAY)),
+    )
+    return fig
+
+
+def orange_bar(data, label):
+    fig = px.bar(
+        data, x="count", y="value", orientation="h",
+        labels={"value": label, "count": "Alumni"},
+        color_discrete_sequence=[WHITE],
+    )
+    fig.update_layout(yaxis={"categoryorder": "total ascending"})
+    return style_fig(fig)
+
+
 left, right = st.columns(2)
 
 with left:
     st.subheader(f"Top {top_n} Companies")
-    data = top_counts(filtered["company"], top_n)
-    fig = px.bar(data, x="count", y="value", orientation="h", labels={"value": "Company", "count": "Alumni"})
-    fig.update_layout(yaxis={"categoryorder": "total ascending"})
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(orange_bar(top_counts(filtered["company"], top_n), "Company"), use_container_width=True)
 
 with right:
     st.subheader(f"Top {top_n} Locations")
-    data = top_counts(filtered["location"], top_n)
-    fig = px.bar(data, x="count", y="value", orientation="h", labels={"value": "Location", "count": "Alumni"})
-    fig.update_layout(yaxis={"categoryorder": "total ascending"})
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(orange_bar(top_counts(filtered["location"], top_n), "Location"), use_container_width=True)
 
 st.subheader(f"Top {top_n} Job Categories")
-data = top_counts(filtered["job_category"], top_n)
-fig = px.bar(data, x="count", y="value", orientation="h", labels={"value": "Category", "count": "Alumni"})
-fig.update_layout(yaxis={"categoryorder": "total ascending"})
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(orange_bar(top_counts(filtered["job_category"], top_n), "Category"), use_container_width=True)
 
 with st.expander("See raw job titles within each category"):
     st.dataframe(
@@ -142,12 +412,18 @@ with st.expander("See raw job titles within each category"):
 st.subheader("Job Category Word Cloud")
 cat_freq = filtered["job_category"].value_counts().to_dict()
 if cat_freq:
+    import random
+    palette = ["#FFFFFF", "#F0F0F0", "#E0E0E0", "#CCCCCC", "#B8B8B8"]
+
+    def phm_colors(*args, **kwargs):
+        return random.choice(palette)
+
     wc = WordCloud(
         width=1600,
         height=800,
         background_color=None,
         mode="RGBA",
-        colormap="Dark2",
+        color_func=phm_colors,
         prefer_horizontal=0.9,
         collocations=False,
     ).generate_from_frequencies(cat_freq)
@@ -172,12 +448,29 @@ if not state_counts.empty:
         locationmode="USA-states",
         color="count",
         scope="usa",
-        color_continuous_scale="Blues",
+        color_continuous_scale=[[0, "#7a8aa5"], [0.5, "#c5d0e2"], [1, "#FFFFFF"]],
         labels={"count": "Alumni"},
         hover_data={"state": True, "count": True},
     )
-    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), geo=dict(bgcolor="rgba(0,0,0,0)"))
-    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)")
+    fig.update_traces(marker_line_color="#FFFFFF", marker_line_width=1.2)
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        geo=dict(
+            bgcolor="rgba(0,0,0,0)",
+            lakecolor=NAVY,
+            landcolor="#4a5a78",
+            showlakes=False,
+            showsubunits=True,
+            subunitcolor="#FFFFFF",
+            subunitwidth=1.2,
+            showcoastlines=True,
+            coastlinecolor="#FFFFFF",
+            coastlinewidth=1.2,
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color=SOFT_WHITE, family="Inter, sans-serif"),
+        coloraxis_colorbar=dict(tickcolor=LIGHT_GRAY, tickfont=dict(color=LIGHT_GRAY)),
+    )
     st.plotly_chart(fig, use_container_width=True)
     if non_us:
         st.caption(f"{non_us} alumni in non-US locations are not shown on the map.")
@@ -197,4 +490,15 @@ st.download_button(
     data=table.to_csv(index=False).encode("utf-8"),
     file_name="alumni_filtered.csv",
     mime="text/csv",
+)
+
+st.markdown(
+    """
+    <div class="phm-footer">
+        <div class="wordmark">ΨHM &middot; Psi Eta Mu</div>
+        <p>University of Illinois Urbana-Champaign</p>
+        <p><a href="mailto:contact@phmillinois.org">contact@phmillinois.org</a></p>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
