@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 
+# Data Visualizing
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
@@ -299,13 +300,21 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-DATA_PATH = Path(__file__).parent / "data.csv"
-if not DATA_PATH.exists():
-    st.error(f"Could not find `{DATA_PATH.name}` in the app directory. Drop the CSV next to `app.py` and refresh.")
-    st.stop()
+#Manually opening data.csv locally -> Use PostgreSQL server and script to automatically update and pull new data
+#DATA_PATH = Path(__file__).parent / "data.csv"
+#if not DATA_PATH.exists():
+#    st.error(f"Could not find `{DATA_PATH.name}` in the app directory. Drop the CSV next to `app.py` and refresh.")
+#   st.stop()
 
-df = pd.read_csv(DATA_PATH)
-df.columns = [c.strip().lower() for c in df.columns]
+#df = pd.read_csv(DATA_PATH)
+#df.columns = [c.strip().lower() for c in df.columns]
+
+try:
+    conn = st.connection("postgresql", type="sql", url=st.secrets["DB_URI"])
+    df = conn.query("SELECT * FROM alumni_records", ttl="10m")
+except Exception as e:
+    st.error("Database connection failed. Ensure secrets are configured correctly.")
+    st.stop()
 
 required = {"location", "job", "company"}
 missing = required - set(df.columns)
@@ -483,7 +492,8 @@ table = filtered
 if search:
     mask = table.apply(lambda row: row.astype(str).str.contains(search, case=False, na=False).any(), axis=1)
     table = table[mask]
-st.dataframe(table, use_container_width=True)
+display_table = table.drop(columns=["latitude", "longitude"], errors="ignore")
+st.dataframe(display_table, use_container_width=True)
 
 st.download_button(
     "Download filtered CSV",

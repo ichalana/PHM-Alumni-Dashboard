@@ -1,0 +1,15 @@
+# Secret Files (NEVER UPLOAD THESE)
+.env
+.streamlit/
+google_secret.json
+
+# Python Cache (Junk files Python creates automatically)
+__pycache__/
+*.pyc
+
+# Virtual Environments (If you ever use one)
+venv/
+.venv/
+
+# Mac OS junk (Just in case another dev uses a Mac)
+.DS_Store
