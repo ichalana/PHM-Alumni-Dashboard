@@ -3,8 +3,6 @@ import gspread
 from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv
-from geopy.geocoders import Nominatim
-from geopy.extra.rate_limiter import RateLimiter
 
 # 1. Load hidden passwords from the .env file
 load_dotenv()
@@ -24,28 +22,7 @@ def run_sync():
     df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
     print(f"   -> Pulled {len(df)} rows.")
 
-    print("\n2. Geocoding Locations...")
-    geolocator = Nominatim(user_agent="phm_alumni_pipeline")
-    geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
-    
-    # Check if 'location' column exists
-    if 'location' in df.columns:
-        unique_locs = df['location'].dropna().unique()
-        coords = {}
-        for loc in unique_locs:
-            try:
-                location = geocode(f"{loc}, USA")
-                coords[loc] = (location.latitude, location.longitude) if location else (None, None)
-            except:
-                coords[loc] = (None, None)
-        
-        df['latitude'] = df['location'].map(lambda x: coords.get(x, (None, None))[0])
-        df['longitude'] = df['location'].map(lambda x: coords.get(x, (None, None))[1])
-        print("   -> Coordinates mapped successfully.")
-    else:
-        print("   -> No 'location' column found. Skipping geocoding.")
-
-    print("\n3. Pushing to Supabase (PostgreSQL)...")
+    print("\n2. Pushing to Supabase (PostgreSQL)...")
     engine = create_engine(DB_URI)
     df.to_sql('alumni_records', engine, if_exists='replace', index=False)
     
