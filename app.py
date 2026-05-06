@@ -40,6 +40,30 @@ def categorize_job(title: str) -> str:
                 return category
     return "Other"
 
+INDUSTRY_CATEGORIES = [
+    ("Consulting & Advisory", [r"\bey\b", r"kpmg", r"pwc", r"deloitte", r"dimeo", r"analytic partners", r"topbloc", r"abis", r"axtria", r"kaufman hall", r"kcic"]),
+    ("Education & Academia", [r"university", r"uchicago"]),
+    ("Finance & Trading", [r"capital one", r"jp morgan", r"morgan stanley", r"jump trading", r"investment", r"bank", r"equity"]),
+    ("Healthcare & Pharma", [r"abbvie", r"medtronic", r"health", r"pharma"]),
+    ("Technology & Software", [r"epic", r"david ai", r"nokia", r"linkedin", r"software", r"tech", r"cyber"]),
+    ("Food & Beverage", [r"mcdonald", r"us foods", r"beverage"]),
+    ("Manufacturing & Engineering", [r"kreis", r"misumi", r"caterpillar", r"manufacturing", r"engineering"]),
+    ("Retail & Consumer", [r"nike", r"golf vx", r"retail", r"apparel"]),
+    ("Government & Public Sector", [r"city of", r"government", r"public", r"state of"]),
+    ("Transportation & Logistics", [r"united airlines", r"logistics", r"transit", r"aviation", r"transport"]),
+]
+
+def categorize_industry(company: str) -> str:
+    if pd.isna(company): return "Other"
+    text = str(company).lower()
+    for industry, patterns in INDUSTRY_CATEGORIES:
+        for pattern in patterns:
+            if re.search(pattern, text):
+                return industry
+    return "Other / Services"
+
+
+
 st.set_page_config(page_title="ΨHM Alumni Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
 NAVY = "#13294B"
@@ -301,6 +325,7 @@ st.markdown(
 )
 
 #Manually opening data.csv locally -> Use PostgreSQL server and script to automatically update and pull new data
+
 #DATA_PATH = Path(__file__).parent / "data.csv"
 #if not DATA_PATH.exists():
 #    st.error(f"Could not find `{DATA_PATH.name}` in the app directory. Drop the CSV next to `app.py` and refresh.")
@@ -340,7 +365,10 @@ if jobs_not_shared:
         f"they're counted in the total below but excluded from the job, location, and company charts."
     )
 
-df["job_category"] = df["job"].map(categorize_job)
+# Job and Industry Categories for plotting
+df["job_category"] = df["job"].map(categorize_job) 
+df["industry"] = df["company"].map(categorize_industry)
+
 
 with st.sidebar:
     st.header("Filters")
@@ -377,13 +405,24 @@ def style_fig(fig):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(color=SOFT_WHITE, family="Inter, Helvetica Neue, Arial, sans-serif"),
-        xaxis=dict(gridcolor="rgba(255,255,255,0.08)", color=LIGHT_GRAY, zerolinecolor="rgba(255,255,255,0.15)"),
-        yaxis=dict(gridcolor="rgba(255,255,255,0.08)", color=LIGHT_GRAY, zerolinecolor="rgba(255,255,255,0.15)"),
+        xaxis=dict(
+            gridcolor="rgba(255,255,255,0.08)", 
+            color=LIGHT_GRAY, 
+            zerolinecolor="rgba(255,255,255,0.15)",
+            title_font=dict(size=15, color=WHITE),  
+            tickfont=dict(size=13, color=SOFT_WHITE) 
+        ),
+        yaxis=dict(
+            gridcolor="rgba(255,255,255,0.08)", 
+            color=LIGHT_GRAY, 
+            zerolinecolor="rgba(255,255,255,0.15)",
+            title_font=dict(size=15, color=WHITE),  
+            tickfont=dict(size=13, color=SOFT_WHITE) 
+        ),
         margin=dict(l=10, r=10, t=20, b=10),
         coloraxis_colorbar=dict(tickcolor=LIGHT_GRAY, tickfont=dict(color=LIGHT_GRAY)),
     )
     return fig
-
 
 def orange_bar(data, label):
     fig = px.bar(
@@ -391,22 +430,28 @@ def orange_bar(data, label):
         labels={"value": label, "count": "Alumni"},
         color_discrete_sequence=[WHITE],
     )
+    # Bolding the actual category text on the y-axis for extra readability
     fig.update_layout(yaxis={"categoryorder": "total ascending"})
     return style_fig(fig)
 
 
+
+# --- 2x2 CHART GRID ---
 left, right = st.columns(2)
 
 with left:
-    st.subheader(f"Top {top_n} Companies")
+    st.subheader(f"Top Companies")
     st.plotly_chart(orange_bar(top_counts(filtered["company"], top_n), "Company"), use_container_width=True)
+    
+    st.subheader(f"Top Job Categories")
+    st.plotly_chart(orange_bar(top_counts(filtered["job_category"], top_n), "Job Category"), use_container_width=True)
 
 with right:
-    st.subheader(f"Top {top_n} Locations")
-    st.plotly_chart(orange_bar(top_counts(filtered["location"], top_n), "Location"), use_container_width=True)
+    st.subheader(f"Top Industries")
+    st.plotly_chart(orange_bar(top_counts(filtered["industry"], top_n), "Industry"), use_container_width=True)
 
-st.subheader(f"Top {top_n} Job Categories")
-st.plotly_chart(orange_bar(top_counts(filtered["job_category"], top_n), "Category"), use_container_width=True)
+    st.subheader(f"Top Locations")
+    st.plotly_chart(orange_bar(top_counts(filtered["location"], top_n), "Location"), use_container_width=True)
 
 with st.expander("See raw job titles within each category"):
     st.dataframe(
@@ -492,8 +537,7 @@ table = filtered
 if search:
     mask = table.apply(lambda row: row.astype(str).str.contains(search, case=False, na=False).any(), axis=1)
     table = table[mask]
-display_table = table.drop(columns=["latitude", "longitude"], errors="ignore")
-st.dataframe(display_table, use_container_width=True)
+st.dataframe(table, use_container_width=True)
 
 st.download_button(
     "Download filtered CSV",
@@ -507,7 +551,7 @@ st.markdown(
     <div class="phm-footer">
         <div class="wordmark">ΨHM &middot; Psi Eta Mu</div>
         <p>University of Illinois Urbana-Champaign</p>
-        <p><a href="mailto:contact@phmillinois.org">contact@phmillinois.org</a></p>
+        <p><a href="mailto:phmillinois@gmail.com">phmillinois@gmail.com</a></p>
     </div>
     """,
     unsafe_allow_html=True,
