@@ -350,8 +350,11 @@ if missing:
 for col in ["location", "job", "company"]:
     df[col] = df[col].astype(str).str.strip()
 
+missing_loc_mask = df["location"].str.lower().isin(["", "nan", "none", "unknown"])
+df.loc[missing_loc_mask, "location"] = "Remote" #Replace null locations (when job and company are known, with Remote)
+
 unknown_mask = pd.Series(False, index=df.index)
-for col in ["location", "job", "company"]:
+for col in ["job", "company"]:
     unknown_mask |= df[col].str.lower().isin(["", "nan", "none", "unknown"])
 
 total_alumni = len(df)
@@ -451,7 +454,8 @@ with right:
     st.plotly_chart(orange_bar(top_counts(filtered["industry"], top_n), "Industry"), use_container_width=True)
 
     st.subheader(f"Top Locations")
-    st.plotly_chart(orange_bar(top_counts(filtered["location"], top_n), "Location"), use_container_width=True)
+    valid_locations = filtered[filtered["location"] != "Remote"]["location"] #Not accounting for Remote
+    st.plotly_chart(orange_bar(top_counts(valid_locations, top_n), "Location"), use_container_width=True)
 
 with st.expander("See raw job titles within each category"):
     st.dataframe(
@@ -526,8 +530,8 @@ if not state_counts.empty:
         coloraxis_colorbar=dict(tickcolor=LIGHT_GRAY, tickfont=dict(color=LIGHT_GRAY)),
     )
     st.plotly_chart(fig, use_container_width=True)
-    if non_us:
-        st.caption(f"{non_us} alumni in non-US locations are not shown on the map.")
+if non_us:
+        st.caption(f"{non_us} alumni in non-US or Remote locations are not shown on the map.")
 else:
     st.caption("No US-state locations to map.")
 
