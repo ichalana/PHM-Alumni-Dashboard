@@ -8,8 +8,7 @@
 
 An end-to-end data engineering pipeline and interactive visualization dashboard built for the Psi Eta Mu (ΨHM) professional fraternity at the University of Illinois Urbana-Champaign. This tool transforms raw, decentralized alumni records into a secure, centralized, and actionable network map.
 
-![Dashboard Preview]([https://github.com/user-attachments/assets/8fec0ed5-0b61-4de7-be7a-600ec957a8cb])
-*(Note: Sensitive contact data has been anonymized for public demonstration).*
+[![Dashboard Preview:](<img width="2559" height="1569" alt="Screenshot 2026-05-23 170317" src="https://github.com/user-attachments/assets/a055156c-beb1-40ad-b323-63803a6ab025" />)](https://github.com/user-attachments/assets/8fec0ed5-0b61-4de7-be7a-600ec957a8cb) *(Note: Sensitive contact data has been anonymized for public demonstration).*
 
 ## Business Value 
 Previously, alumni data was scattered and difficult to leverage. This dashboard provides the executive board and active members with:
